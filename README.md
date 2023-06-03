@@ -12,7 +12,7 @@ ARG TRT_CONTAINER_VERSION=23.05
 ARG CMAKE_CUDA_ARCHITECTURES=37;50;52;60;61;70;75;80;89
 RUN pip install opencv-python pandas
 
-#build
+# build
 cd dockerfiles
 docker build -t styler00dollar/onnxruntime-trt:latest -f Dockerfile.tensorrt .
 ```
