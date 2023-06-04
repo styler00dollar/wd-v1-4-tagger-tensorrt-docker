@@ -12,7 +12,7 @@ docker pull styler00dollar/onnxruntime-trt:latest
 docker run --gpus all -it -v /home/user/Downloads/:/workspace/ styler00dollar/onnxruntime-trt:latest 
 
 # example usage
-python tag.py --onnx wd-v1-4-swinv2-tagger-v2.onnx --input test_data/ --tag_mapping selected_tags.csv --threshold 0.90 [--corrupt corrupt]
+python tag.py --onnx wd-v1-4-swinv2-tagger-v2_448_0.6854.onnx --input test_data/ --tag_mapping selected_tags.csv --threshold 0.90 --num_threads=16 --batch_size=1
 ```
 Benchmarks:
 
