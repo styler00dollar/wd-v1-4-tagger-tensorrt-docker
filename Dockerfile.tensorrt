@@ -6,7 +6,7 @@
 # Dockerfile to run ONNXRuntime with TensorRT integration
 
 # nVidia TensorRT Base Image
-FROM nvcr.io/nvidia/tensorrt:23.05-py3
+FROM nvcr.io/nvidia/tensorrt:23.09-py3
 
 ARG ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime
 ARG ONNXRUNTIME_BRANCH=main
