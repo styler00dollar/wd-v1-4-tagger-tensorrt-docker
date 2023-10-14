@@ -17,7 +17,14 @@ RUN apt-get update &&\
 RUN unattended-upgrade
 
 WORKDIR /code
-ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:/code/cmake-3.26.3-linux-x86_64/bin:${PATH}
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+
+# cmake 3.28 (CMake 3.26 or higher is required)
+RUN apt-get -y update && apt install wget && wget https://github.com/Kitware/CMake/releases/download/v3.28.0-rc1/cmake-3.28.0-rc1-linux-x86_64.sh  && \
+    chmod +x cmake-3.28.0-rc1-linux-x86_64.sh  && sh cmake-3.28.0-rc1-linux-x86_64.sh  --skip-license && \
+    cp /code/bin/cmake /usr/bin/cmake && cp /code/bin/cmake /usr/lib/cmake && \
+    cp /code/bin/cmake /usr/local/bin/cmake && cp -r /code/share/cmake-3.28 /usr/local/share/ && \
+    rm -rf cmake-3.28.0-rc1-linux-x86_64.sh 
 
 # Prepare onnxruntime repository & build onnxruntime with TensorRT
 # --parallel crashes for me due to out of ram, only use it if you have ram
