@@ -9,7 +9,7 @@
 FROM nvcr.io/nvidia/tensorrt:23.09-py3
 
 ARG ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime
-ARG ONNXRUNTIME_BRANCH=main
+ARG ONNXRUNTIME_BRANCH=rel-1.16.1
 ARG CMAKE_CUDA_ARCHITECTURES=37;50;52;60;61;70;75;80;89
 
 RUN apt-get update &&\
