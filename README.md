@@ -16,12 +16,32 @@ python tag.py --onnx wd-v1-4-swinv2-tagger-v2_448_0.6854.onnx --input test_data/
 ```
 Benchmarks:
 
-Tests were done on a large number of random images. Benchmarks currently only for fp32 since I don't know if fp16 is viable with these models. Average speed of running this script on a 4090.
+Tests were done 10000 images with 448px png images. Average speed of running this script on a 4090. Further speed optimization could be done by batching data.
 
-| Model                                         | TensorrtExecutionProvider (fp32)  | TensorrtExecutionProvider+16 threads (fp32) |
-| --------------------------------------------- |:---------------------------------:| :------------------------------------------:|
-| wd-v1-4-swinv2-tagger-v2_448_0.6854.onnx      | 11.71img/s                        | freezing?
-| wd-v1-4-moat-tagger-v2_448_0.6911.onnx        | 11.93img/s                        | 139.46img/s
-| wd-v1-4-convnext-tagger-v2_448_0.6810.onnx    | 11.8img/s                         | 144.76img/s
-| wd-v1-4-convnextv2-tagger-v2_448_0.6862.onnx  | 11.65img/s                        | 122.97img/s
-| wd-v1-4-vit-tagger-v2_448_0.6770.onnx         | 12.12img/s                        | 116.69img/s
+Images can be generated with:
+```python
+import numpy as np
+from PIL import Image
+
+for i in range(1000):
+    random_image = np.random.randint(0, 256, (448, 448, 3), dtype=np.uint8)
+    img = Image.fromarray(random_image)
+    img.save(f"random_image_{i}.png")
+```
+
+TensorRT settings:
+```
+options["trt_engine_cache_enable"] = True
+options["trt_timing_cache_enable"] = True 
+options["trt_fp16_enable"] = True
+options["trt_max_workspace_size"] = 7000000000  # ~7gb
+options["trt_builder_optimization_level"] = 5
+```
+
+| Model                                            | TensorrtExecutionProvider (fp16) | TensorrtExecutionProvider+16 threads (fp16) |
+| ------------------------------------------------ |:-------------------------------: |:-------------------------------------------:|
+| wd-v1-4-swinv2-tagger-v2_448_0.6854_sim.onnx     | 181.81it/s (55 seconds)          | 277.77it/s (36 seconds)                     | 
+| wd-v1-4-moat-tagger-v2_448_0.6911_sim.onnx       | 192.30it/s (52 seconds)          | 277.77it/s (36 seconds)                     |
+| wd-v1-4-convnextv2-tagger-v2_448_0.6862_sim.onnx | 108.69it/s (1:32 min)            | 277.77it/s (36 seconds)                     |
+| wd-v1-4-vit-tagger-v2_448_0.6770_sim.onnx        | 169.49it/s (59 seconds)          | 277.77it/s (36 seconds)                     |
+| joytag_clamp_normalized_448px_sim.onnx           | 232.55it/s (43 seconds)          | freezing
