@@ -44,4 +44,4 @@ options["trt_builder_optimization_level"] = 5
 | wd-v1-4-moat-tagger-v2_448_0.6911_sim.onnx       | 192.30it/s (52 seconds)          | 277.77it/s (36 seconds)                     |
 | wd-v1-4-convnextv2-tagger-v2_448_0.6862_sim.onnx | 108.69it/s (1:32 min)            | 277.77it/s (36 seconds)                     |
 | wd-v1-4-vit-tagger-v2_448_0.6770_sim.onnx        | 169.49it/s (59 seconds)          | 277.77it/s (36 seconds)                     |
-| joytag_clamp_normalized_448px_sim.onnx           | 232.55it/s (43 seconds)          | freezing
+| joytag_clamp_normalized_448px_sim.onnx           | 212.76it/s (47 seconds)          | freezing
