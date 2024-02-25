@@ -6,7 +6,9 @@ import numpy as np
 import onnxruntime
 import os
 import pandas as pd
+import shutil
 
+onnxruntime.set_default_logger_severity(3)
 os.environ["ORT_TENSORRT_ENGINE_CACHE_ENABLE"] = "1"
 os.environ["ORT_TENSORRT_CACHE_PATH"] = "."
 
@@ -58,28 +60,40 @@ def smart_resize(img, size):
 def process_image(image_path, session, tag_df, threshold):
     try:
         img = cv2.imread(image_path)
+
         if img is None:
             os.rename(image_path, os.path.join(args.corrupt, image_file))
             return
+
+        img = make_square(img, target_size=448)
+        img = smart_resize(img, size=448)
+        img = np.expand_dims(img, axis=0)
+
+        if "joytag" in args.onnx:
+            img = img.transpose((0, 3, 1, 2)) / 255
+
+        if "wd" in args.onnx:
+            probabilities = session.run(None, {"input_1:0": img})[0][0]
+        elif "joytag" in args.onnx:
+            probabilities = session.run(None, {"input": img})[0][0]
+        else:
+            raise Exception("Invalid model")
+
+        tag_df["probs"] = probabilities
+
+        found_tags = tag_df[tag_df["probs"] > threshold][["name"]]
+        tag_names_str = ", ".join(found_tags["name"].tolist())
+
+        txt_filename = os.path.splitext(os.path.basename(image_path))[0] + ".txt"
+        txt_path = os.path.join(os.path.dirname(image_path), txt_filename)
+
+        with open(txt_path, "w") as f:
+            f.write(tag_names_str)
+
     except Exception as e:
-        os.rename(image_path, os.path.join(args.corrupt, image_file))
+        print(e)
+        shutil.move(image_path, os.path.join(args.corrupt, image_file))
         return
-
-    img = make_square(img, target_size=448)
-    img = smart_resize(img, size=448)
-    img = np.expand_dims(img, axis=0)
-
-    probabilities = session.run(None, {"input_1:0": img})[0][0]
-    tag_indices = np.argsort(probabilities)[::-1]
-    tag_df["probs"] = probabilities
-    found_tags = tag_df[tag_df["probs"] > threshold][["name"]]
-    tag_names_str = ", ".join(found_tags["name"].tolist())
-
-    txt_filename = os.path.splitext(os.path.basename(image_path))[0] + ".txt"
-    txt_path = os.path.join(os.path.dirname(image_path), txt_filename)
-
-    with open(txt_path, "w") as f:
-        f.write(tag_names_str)
 
 
 def process_images(images, session, tag_df, threshold):
@@ -100,13 +114,24 @@ sess_options.graph_optimization_level = (
     onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
 )
 
+options = {}
+options["device_id"] = 0
+options["trt_engine_cache_enable"] = True
+options[
+    "trt_timing_cache_enable"
+] = True  # Using TensorRT timing cache to accelerate engine build time on a device with the same compute capability
+options["trt_engine_cache_path"] = "/workspace/"
+options["trt_fp16_enable"] = True
+options["trt_max_workspace_size"] = 7000000000  # ~7gb
+options["trt_builder_optimization_level"] = 5
+
 sessions = []
 for i in range(args.num_threads):
     session = onnxruntime.InferenceSession(
         args.onnx,
         sess_options,
         providers=[
-            "TensorrtExecutionProvider",
+            ("TensorrtExecutionProvider", options),
         ],
     )
     sessions.append(session)
