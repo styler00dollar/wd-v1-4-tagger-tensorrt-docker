@@ -6,10 +6,10 @@
 # Dockerfile to run ONNXRuntime with TensorRT integration
 
 # nVidia TensorRT Base Image
-FROM nvcr.io/nvidia/tensorrt:23.09-py3
+FROM nvcr.io/nvidia/tensorrt:24.08-py3
 
 ARG ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime
-ARG ONNXRUNTIME_BRANCH=rel-1.16.1
+ARG ONNXRUNTIME_BRANCH=rel-1.19.1
 ARG CMAKE_CUDA_ARCHITECTURES=37;50;52;60;61;70;75;80;89
 
 RUN apt-get update &&\
@@ -33,7 +33,9 @@ RUN git clone --single-branch --branch ${ONNXRUNTIME_BRANCH} --recursive ${ONNXR
     trt_version=${TRT_VERSION:0:3} &&\
     /bin/sh onnxruntime/dockerfiles/scripts/checkout_submodules.sh ${trt_version} &&\
     cd onnxruntime &&\
-    PYTHONPATH=/usr/bin/python3 /bin/sh build.sh --allow_running_as_root --build_shared_lib --cuda_home /usr/local/cuda --cudnn_home /usr/lib/x86_64-linux-gnu/ --use_tensorrt --tensorrt_home /usr/lib/x86_64-linux-gnu/ --config Release --build_wheel --skip_tests --skip_submodule_sync --cmake_extra_defines '"CMAKE_CUDA_ARCHITECTURES='${CMAKE_CUDA_ARCHITECTURES}'"' &&\
+    PYTHONPATH=/usr/bin/python3 /bin/sh build.sh --nvcc_threads 8 --parallel 8 --allow_running_as_root --build_shared_lib \
+        --cuda_home /usr/local/cuda --cudnn_home /usr/lib/x86_64-linux-gnu/ --use_tensorrt --tensorrt_home /usr/lib/x86_64-linux-gnu/ \
+        --config Release --build_wheel --skip_tests --skip_submodule_sync --cmake_extra_defines '"CMAKE_CUDA_ARCHITECTURES='${CMAKE_CUDA_ARCHITECTURES}'"' &&\
     pip install /code/onnxruntime/build/Linux/Release/dist/*.whl &&\
     cd ..
 RUN pip install opencv-python pandas tqdm
